@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>活力贪吃蛇 | Neon Snake</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- 顶栏标题与控制 -->
+    <header class="game-header">
+      <div class="logo-area">
+        <span class="snake-icon">🐍</span>
+        <h1>VIBRANT <span class="accent-text">SNAKE</span></h1>
+      </div>
+      <div class="top-actions">
+        <button id="btn-theme" class="icon-btn" title="切换明亮/暗夜模式 (T)">
+          <span id="theme-icon">☀️</span>
+        </button>
+        <button id="btn-sound" class="icon-btn" title="切换音效 (M)">
+          <span id="sound-icon">🔊</span>
+        </button>
+        <button id="btn-help" class="icon-btn" title="玩法帮助 (?)">
+          <span>❓</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 计分看板 -->
+    <div class="stats-board">
+      <div class="stat-card">
+        <span class="stat-label">当前得分</span>
+        <span class="stat-value" id="current-score">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">历史最高</span>
+        <span class="stat-value highlight" id="high-score">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">连击倍率</span>
+        <span class="stat-value combo-badge" id="combo-multiplier">x1.0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">蛇身长度</span>
+        <span class="stat-value" id="snake-length">3</span>
+      </div>
+    </div>
+
+    <!-- 游戏主视窗区域 -->
+    <div class="canvas-wrapper">
+      <canvas id="game-canvas" width="600" height="600"></canvas>
+
+      <!-- 连击提示特效 -->
+      <div id="combo-popup" class="combo-popup hidden">COMBO x2!</div>
+
+      <!-- 开始 / 暂停 / 结束 覆盖蒙层 -->
+      <div id="overlay" class="overlay">
+        <div class="overlay-card" id="overlay-card">
+          <h2 id="overlay-title">活力贪吃蛇</h2>
+          <p id="overlay-desc" class="overlay-desc">体验极致流畅、明亮清爽的经典贪吃蛇</p>
+
+          <div id="overlay-stats" class="overlay-stats hidden">
+            <div class="overlay-stat-item">
+              <span>本次得分:</span>
+              <strong id="final-score">0</strong>
+            </div>
+            <div class="overlay-stat-item">
+              <span>最高纪录:</span>
+              <strong id="final-high-score">0</strong>
+            </div>
+            <div class="overlay-stat-item">
+              <span>吞食苹果:</span>
+              <strong id="final-apples">0</strong>
+            </div>
+            <div class="overlay-stat-item">
+              <span>最高连击:</span>
+              <strong id="final-combo">x1.0</strong>
+            </div>
+          </div>
+
+          <button id="btn-start" class="btn-primary">开始游戏 (Space)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 游戏模式与设置 -->
+    <div class="settings-bar">
+      <div class="setting-group">
+        <span class="group-title">游戏模式</span>
+        <div class="btn-toggle-group" id="mode-group">
+          <button class="toggle-btn active" data-mode="classic">经典撞墙</button>
+          <button class="toggle-btn" data-mode="wrap">无尽穿墙</button>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <span class="group-title">移动速度</span>
+        <div class="btn-toggle-group" id="speed-group">
+          <button class="toggle-btn" data-speed="slow">休闲</button>
+          <button class="toggle-btn active" data-speed="normal">标准</button>
+          <button class="toggle-btn" data-speed="fast">极速</button>
+          <button class="toggle-btn" data-speed="insane">狂暴</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 触屏 / 鼠标 虚拟方向盘 (支持移动端与点击) -->
+    <div class="dpad-container">
+      <div class="dpad">
+        <button class="dpad-btn up" id="dpad-up" aria-label="向上">▲</button>
+        <button class="dpad-btn left" id="dpad-left" aria-label="向左">◀</button>
+        <div class="dpad-center" id="dpad-pause" title="暂停/继续">⏸</div>
+        <button class="dpad-btn right" id="dpad-right" aria-label="向右">▶</button>
+        <button class="dpad-btn down" id="dpad-down" aria-label="向下">▼</button>
+      </div>
+    </div>
+
+    <!-- 底部操作提示 -->
+    <footer class="game-footer">
+      <div class="key-hints">
+        <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 或 <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> 转向</span>
+        <span><kbd>空格</kbd> 暂停/继续</span>
+        <span><kbd>R</kbd> 重新开始</span>
+        <span><kbd>M</kbd> 静音</span>
+        <span><kbd>T</kbd> 亮/暗切换</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- 玩法帮助弹窗 -->
+  <div id="help-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>🎮 游戏规则与特色道具</h3>
+        <button id="btn-close-help" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="rule-item">
+          <span class="icon">🍎</span>
+          <div>
+            <strong>鲜嫩红苹果</strong>
+            <p>基础果实，提供 +10 分，每次吞食增加蛇身长度。</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <span class="icon">⭐</span>
+          <div>
+            <strong>金色星星果（限时）</strong>
+            <p>随机稀有刷出，有时限倒计时！吞食奖励 +50 分及大量连击！</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <span class="icon">❄️</span>
+          <div>
+            <strong>极寒冰晶果</strong>
+            <p>吞食后提供 +20 分，并在短时间内减速 35%，化解险情！</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <span class="icon">⚡</span>
+          <div>
+            <strong>连击 (Combo) 系统</strong>
+            <p>在短时间内连续吃到食物可积累连击倍率（最高可达 3.0 倍得分）！</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <span class="icon">🌀</span>
+          <div>
+            <strong>无尽穿墙模式</strong>
+            <p>撞击边缘墙壁将从另一侧穿越出来，畅享超长蛇身生存！</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-modal-ok" class="btn-primary">我知道了，开玩！</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="audio.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
